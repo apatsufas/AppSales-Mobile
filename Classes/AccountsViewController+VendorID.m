@@ -99,8 +99,7 @@
 	[self dataFromSynchronousPostRequestWithURL:[NSURL URLWithString:@"https://reportingitc.apple.com/vendor_default.faces"] bodyDictionary:reportPostData response:NULL];
 	
 	NSString *salesPage = [NSString stringWithContentsOfURL:[NSURL URLWithString:@"https://reportingitc.apple.com/sales.faces"] usedEncoding:NULL error:NULL];
-    
-	NSString *defaultVendorID = [salesPage stringByMatching:@">.*?\\s(8[0-9]{7})" capture:1];
+	NSString *defaultVendorID = [salesPage stringByMatching:@">.*?\\s?(8[0-9]{7})" capture:1];
 	if (!defaultVendorID) {
 		[self performSelectorOnMainThread:@selector(failedToLoadVendorIDs) withObject:nil waitUntilDone:YES];
 	} else {
@@ -112,9 +111,9 @@
 
 - (void)finishedLoadingVendorID:(NSString *)vendorID
 {
-	if (self.modalViewController) {
+	if (self.presentedViewController) {
 		//Adding new account:
-		FieldEditorViewController *vc = [[(UINavigationController *)self.modalViewController viewControllers] objectAtIndex:0];
+		FieldEditorViewController *vc = [[(UINavigationController *)self.presentedViewController viewControllers] objectAtIndex:0];
 		[vc.values setObject:vendorID forKey:kAccountVendorID];
 		[vc.tableView reloadData];
 	} else {
@@ -127,7 +126,7 @@
 
 - (void)failedToLoadVendorIDs
 {
-	[[[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error", nil) message:NSLocalizedString(@"The vendor ID could not be filled automatically. Please check your username and password or enter your vendor ID manually.", nil) delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil] autorelease] show];
+	[[[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error", nil) message:NSLocalizedString(@"The vendor ID could not be filled automatically. Please check your username and password or enter your vendor ID manually. You'll find it at the top of the Sales and Trends module on itunesconnect.apple.com.", nil) delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil] autorelease] show];
 }
 
 - (NSString *)stringFromSynchronousPostRequestWithURL:(NSURL *)URL bodyDictionary:(NSDictionary *)bodyDictionary

@@ -25,19 +25,21 @@
 #import "PromoCodesViewController.h"
 #import "PromoCodesLicenseViewController.h"
 #import "KKPasscodeLock.h"
+#import "ZipFile.h"
+#import "ZipWriteStream.h"
 
 #define kAddNewAccountEditorIdentifier		@"AddNewAccountEditorIdentifier"
 #define kEditAccountEditorIdentifier		@"EditAccountEditorIdentifier"
 #define kSettingsEditorIdentifier			@"SettingsEditorIdentifier"
 #define kUpdateExchangeRatesButton			@"UpdateExchangeRatesButton"
-#define kPasscodeLockButton         @"PasscodeLockButton"
+#define kPasscodeLockButton					@"PasscodeLockButton"
 #define kImportReportsButton				@"ImportReportsButton"
 #define kExportReportsButton				@"ExportReportsButton"
 #define kDownloadBoxcarButton				@"DownloadBoxcarButton"
 #define kAddToBoxcarButton					@"AddToBoxcarButton"
 #define	kDeleteAccountButton				@"DeleteAccount"
 #define kAlertTagConfirmImport				1
-#define kAlertTagConfirmExport				2
+#define kAlertTagExportCompleted			2
 #define kAlertTagConfirmDelete				3
 #define kAccountTitle						@"title"
 #define kKeychainServiceIdentifier			@"iTunesConnect"
@@ -45,7 +47,7 @@
 
 @implementation AccountsViewController
 
-@synthesize managedObjectContext, accounts, selectedAccount, refreshButtonItem, delegate;
+@synthesize managedObjectContext, accounts, selectedAccount, refreshButtonItem, delegate, exportedReportsZipPath, documentInteractionController;
 
 - (void)viewDidLoad
 {
@@ -62,6 +64,8 @@
 	self.navigationItem.rightBarButtonItem = refreshButtonItem;
 	
 	self.title = NSLocalizedString(@"AppSales", nil);
+    self.navigationItem.backBarButtonItem = [[[UIBarButtonItem alloc] initWithTitle:@"" style:UIBarButtonItemStylePlain target:nil action:nil] autorelease];
+	
 	UIBarButtonItem *addButton = [[[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemAdd target:self action:@selector(addNewAccount)] autorelease];
 	self.navigationItem.leftBarButtonItem = addButton;
 	
@@ -128,10 +132,8 @@
 	UINavigationController *aboutNavController = [[[UINavigationController alloc] initWithRootViewController:aboutViewController] autorelease];
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
 		aboutNavController.modalPresentationStyle = UIModalPresentationFormSheet;
-	} else {
-		aboutNavController.modalTransitionStyle = UIModalTransitionStyleFlipHorizontal;
 	}
-	[self presentModalViewController:aboutNavController animated:YES];
+	[self presentViewController:aboutNavController animated:YES completion:nil];
 }
 
 
@@ -196,17 +198,14 @@
 		cell.textLabel.text = NSLocalizedString(@"Sales and Trends", nil);
 		cell.badgeCount = badge;
 		cell.imageView.image = [UIImage imageNamed:@"Sales.png"];
-		cell.imageView.highlightedImage = [UIImage as_tintedImageNamed:@"Sales.png" color:[UIColor whiteColor]];
 	} else if (indexPath.row == 1) {
 		NSInteger badge = [[[self.accounts objectAtIndex:indexPath.section] paymentsBadge] integerValue];
 		cell.textLabel.text = NSLocalizedString(@"Payments", nil);
 		cell.badgeCount = badge;
 		cell.imageView.image = [UIImage imageNamed:@"Payments.png"];
-		cell.imageView.highlightedImage = [UIImage as_tintedImageNamed:@"Payments.png" color:[UIColor whiteColor]];
 	} else if (indexPath.row == 2) {
 		cell.textLabel.text = NSLocalizedString(@"Customer Reviews", nil);
 		cell.imageView.image = [UIImage imageNamed:@"Reviews.png"];
-		cell.imageView.highlightedImage = [UIImage as_tintedImageNamed:@"Reviews.png" color:[UIColor whiteColor]];
 		
 		ASAccount *account = [self.accounts objectAtIndex:indexPath.section];
 		NSFetchRequest *unreadReviewsRequest = [[[NSFetchRequest alloc] init] autorelease];
@@ -216,12 +215,10 @@
 	} else if (indexPath.row == 3) {
 		cell.textLabel.text = NSLocalizedString(@"Promo Codes", nil);
 		cell.imageView.image = [UIImage imageNamed:@"PromoCodes.png"];
-		cell.imageView.highlightedImage = [UIImage as_tintedImageNamed:@"PromoCodes.png" color:[UIColor whiteColor]];
 		cell.badgeCount = 0;
 	} else if (indexPath.row == 4) {
 		cell.textLabel.text = NSLocalizedString(@"Account", nil);
 		cell.imageView.image = [UIImage imageNamed:@"Account.png"];
-		cell.imageView.highlightedImage = [UIImage as_tintedImageNamed:@"Account.png" color:[UIColor whiteColor]];
 		cell.badgeCount = 0;
 	}	
 	return cell;
@@ -323,7 +320,7 @@
 		navigationController.modalPresentationStyle = UIModalPresentationFormSheet;
 		
 	}
-	[self presentModalViewController:navigationController animated:YES];
+    [self presentViewController:navigationController animated:YES completion:nil];
 }
 
 - (void)editAccount:(ASAccount *)account
@@ -388,7 +385,7 @@
 		editAccountViewController.hidesBottomBarWhenPushed = YES;
 	}
 	
-	editAccountViewController.contentSizeForViewInPopover = CGSizeMake(320, 480);
+	editAccountViewController.preferredContentSize = CGSizeMake(320, 480);
 	
 	[self.navigationController pushViewController:editAccountViewController animated:YES];
 }
@@ -429,7 +426,7 @@
 																			defaultValue:[productSortByValue isEqualToString:@"productId"]];
 	FieldSpecifier *productSortingByColorField = [FieldSpecifier checkFieldWithKey:@"sortby.color" title:@"Color" 
 																		defaultValue:[productSortByValue isEqualToString:@"color"]];
-	NSMutableArray *productSortingFields = [NSArray arrayWithObjects:productSortingByProductIdField, productSortingByColorField, nil];
+	NSMutableArray *productSortingFields = [NSMutableArray arrayWithObjects:productSortingByProductIdField, productSortingByColorField, nil];
 
 
 	FieldSectionSpecifier *productSortingSection = [FieldSectionSpecifier sectionWithFields:productSortingFields
@@ -460,7 +457,7 @@
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
 		settingsNavController.modalPresentationStyle = UIModalPresentationFormSheet;
 	}
-	[self presentModalViewController:settingsNavController animated:YES];
+    [self presentViewController:settingsNavController animated:YES completion:nil];
 }
 
 - (void)fieldEditor:(FieldEditorViewController *)editor didFinishEditingWithValues:(NSDictionary *)returnValues
@@ -475,7 +472,7 @@
 			return;
 		}
 		if ([editor.editorIdentifier isEqualToString:kAddNewAccountEditorIdentifier]) {
-			if (password && (!vendorID || vendorID.length == 0)) {
+			if (password && password.length > 0 && (!vendorID || vendorID.length == 0)) {
 				[[[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Missing Information", nil) message:NSLocalizedString(@"You need to enter a vendor ID. If you don't know your vendor ID, tap \"Auto-Fill Vendor ID\".", nil) delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil] autorelease] show];
 				return;
 			}
@@ -515,7 +512,7 @@
 		}
 		[self saveContext];
 		if ([editor.editorIdentifier isEqualToString:kAddNewAccountEditorIdentifier]) {
-			[editor dismissModalViewControllerAnimated:YES];
+			[editor dismissViewControllerAnimated:YES completion:nil];
 		}
 		self.selectedAccount = nil;
 	} else if ([editor.editorIdentifier isEqualToString:kSettingsEditorIdentifier]) {
@@ -532,7 +529,7 @@
 			}
 		}
 		[[NSUserDefaults standardUserDefaults] setBool:[[returnValues objectForKey:kSettingDownloadPayments] boolValue] forKey:kSettingDownloadPayments];
-		[self dismissModalViewControllerAnimated:YES];
+		[self dismissViewControllerAnimated:YES completion:nil];
 		
 		[[NSNotificationCenter defaultCenter] postNotificationName:ASViewSettingsDidChangeNotification object:nil];
 	}
@@ -567,14 +564,7 @@
 			}
 		}
 	} else if ([key isEqualToString:kExportReportsButton]) {
-		NSString *folderName = [self folderNameForExportingReportsOfAccount:self.selectedAccount];
-		UIAlertView *confirmExportAlert = [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Export Reports?", nil) 
-																	  message:[NSString stringWithFormat:NSLocalizedString(@"The original report files for this account will be exported to the folder \"%@\" in your Documents. You can access the exported files using iTunes File Sharing.", nil), folderName] 
-																	 delegate:self 
-															cancelButtonTitle:NSLocalizedString(@"Cancel", nil) 
-															otherButtonTitles:NSLocalizedString(@"Continue", nil), nil] autorelease];
-		confirmExportAlert.tag = kAlertTagConfirmExport;
-		[confirmExportAlert show];
+		[self doExport];
 	} else if ([key hasPrefix:@"product.appstore."]) {
 		NSString *productID = [key substringFromIndex:[@"product.appstore." length]];
 		NSString *appStoreURLString = [NSString stringWithFormat:@"http://itunes.apple.com/app/id%@", productID];
@@ -589,8 +579,8 @@
 		[confirmDeleteAlert show];
 	} else if ([key isEqualToString:@"SelectVendorIDButton"]) {
 		FieldEditorViewController *vc = nil;
-		if (self.modalViewController) {
-			UINavigationController *nav = (UINavigationController *)self.modalViewController;
+		if (self.presentedViewController) {
+			UINavigationController *nav = (UINavigationController *)self.presentedViewController;
 			vc = (FieldEditorViewController *)[[nav viewControllers] objectAtIndex:0];
 		} else {
 			vc = (FieldEditorViewController *)[self.navigationController.viewControllers lastObject];
@@ -626,6 +616,64 @@
 	}
 }
 
+- (void)doExport
+{
+	NSString *docPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
+	NSString *exportFolder = [self folderNameForExportingReportsOfAccount:self.selectedAccount];
+	NSString *exportPath = [docPath stringByAppendingPathComponent:exportFolder];
+	
+	MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.navigationController.view animated:YES];
+	hud.labelText = NSLocalizedString(@"Exporting...", nil);
+	double delayInSeconds = 0.25;
+	dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
+	dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
+		[[NSFileManager defaultManager] createDirectoryAtPath:exportPath withIntermediateDirectories:YES attributes:nil error:NULL];
+		
+		void (^exportBlock)(Report *report) = ^ (Report *report) { 
+			NSString *csv = [report valueForKeyPath:@"originalReport.content"];
+			NSString *filename = [report valueForKeyPath:@"originalReport.filename"];
+			if ([filename hasSuffix:@".gz"]) {
+				filename = [filename substringToIndex:filename.length - 3];
+			}
+			NSString *reportPath = [exportPath stringByAppendingPathComponent:filename];
+			[csv writeToFile:reportPath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
+		};
+		for (Report *dailyReport in self.selectedAccount.dailyReports) {
+			exportBlock(dailyReport);
+		}
+		for (Report *weeklyReport in self.selectedAccount.weeklyReports) {
+			exportBlock(weeklyReport);
+		}
+		
+		self.exportedReportsZipPath = [exportPath stringByAppendingPathExtension:@"zip"];
+		ZipFile *zipFile = [[ZipFile alloc] initWithFileName:self.exportedReportsZipPath mode:ZipFileModeCreate];
+		NSArray *files = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:exportPath error:NULL];
+		for (NSString *filename in files) {
+			NSString *path = [exportPath stringByAppendingPathComponent:filename];
+			NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:NULL];
+			NSDate *date = [attributes fileCreationDate];
+			ZipWriteStream *stream = [zipFile writeFileInZipWithName:filename fileDate:date compressionLevel:ZipCompressionLevelBest];
+			NSData *data = [NSData dataWithContentsOfFile:path];
+			[stream writeData:data];
+			[stream finishedWriting];
+		}
+		[zipFile close];
+		[zipFile release];
+		
+		[[NSFileManager defaultManager] removeItemAtPath:exportPath error:NULL];
+		
+		[MBProgressHUD hideHUDForView:self.navigationController.view animated:YES];
+		
+		UIAlertView *exportCompletedAlert = [[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Export Completed", nil) 
+																		message:NSLocalizedString(@"The report files of this account have been exported as a Zip archive. You can now access the archive via iTunes file sharing or open it in a suitable app.", nil) 
+																	   delegate:self 
+															  cancelButtonTitle:NSLocalizedString(@"Done", nil) 
+															  otherButtonTitles:NSLocalizedString(@"Open in...", nil), nil] autorelease];
+		exportCompletedAlert.tag = kAlertTagExportCompleted;
+		[exportCompletedAlert show];
+	});
+}
+
 - (NSString *)folderNameForExportingReportsOfAccount:(ASAccount *)account
 {
 	NSString *folder = account.title;
@@ -637,18 +685,13 @@
 	}
 	folder = [folder stringByReplacingOccurrencesOfString:@"/" withString:@"_"];
 	folder = [folder stringByReplacingOccurrencesOfString:@":" withString:@"-"];
-	NSString *docPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
-	NSString *path = [docPath stringByAppendingPathComponent:folder];
 	
-	NSString *destPath = path;
-	BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:destPath];
-	int i = 1;
-	while (exists) {
-		destPath = [path stringByAppendingFormat:@" %i", i];
-		exists = [[NSFileManager defaultManager] fileExistsAtPath:destPath];
-		i++;
-	}
-	return [destPath lastPathComponent];
+	NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+	[dateFormatter setDateFormat:@"YYYY-MM-dd"];
+	NSString *dateString = [dateFormatter stringFromDate:[NSDate date]];
+	[dateFormatter release];
+	folder = [folder stringByAppendingFormat:@" %@", dateString];
+	return folder;
 }
 
 - (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -658,52 +701,36 @@
 			[[ReportDownloadCoordinator sharedReportDownloadCoordinator] importReportsIntoAccount:self.selectedAccount];
 			[self.navigationController popViewControllerAnimated:YES];
 		}
-	} else if (alertView.tag == kAlertTagConfirmExport) {
-		if (buttonIndex != [alertView cancelButtonIndex]) {
-			NSString *docPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) lastObject];
-			NSString *exportFolder = [self folderNameForExportingReportsOfAccount:self.selectedAccount];
-			NSString *exportPath = [docPath stringByAppendingPathComponent:exportFolder];
-			
-			MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.navigationController.view animated:YES];
-			hud.labelText = NSLocalizedString(@"Exporting...", nil);
-			double delayInSeconds = 0.25;
-			dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
-			dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
-				[[NSFileManager defaultManager] createDirectoryAtPath:exportPath withIntermediateDirectories:YES attributes:nil error:NULL];
-				
-				void (^exportBlock)(Report *report) = ^ (Report *report) { 
-					NSString *csv = [report valueForKeyPath:@"originalReport.content"];
-					NSString *filename = [report valueForKeyPath:@"originalReport.filename"];
-					if ([filename hasSuffix:@".gz"]) {
-						filename = [filename substringToIndex:filename.length - 3];
-					}
-					NSString *reportPath = [exportPath stringByAppendingPathComponent:filename];
-					[csv writeToFile:reportPath atomically:YES encoding:NSUTF8StringEncoding error:NULL];
-				};
-				for (Report *dailyReport in self.selectedAccount.dailyReports) {
-					exportBlock(dailyReport);
-				}
-				for (Report *weeklyReport in self.selectedAccount.weeklyReports) {
-					exportBlock(weeklyReport);
-				}
-				[MBProgressHUD hideHUDForView:self.navigationController.view animated:YES];
-			});
-		}
 	} else if (alertView.tag == kAlertTagConfirmDelete) {
 		if (buttonIndex != [alertView cancelButtonIndex]) {
-			MBProgressHUD *hud = [MBProgressHUD showHUDAddedTo:self.navigationController.view animated:YES];
-			[hud setLabelText:NSLocalizedString(@"Deleting Account...", nil)];
-			
-			ASAccount *account = [[self.selectedAccount retain] autorelease];
+			[self deleteAccount:self.selectedAccount];
 			[self.navigationController popViewControllerAnimated:YES];
-			[self performSelector:@selector(deleteAccount:) withObject:account afterDelay:0.1];
 		}
 	}
 }
 
+- (void)alertView:(UIAlertView *)alertView didDismissWithButtonIndex:(NSInteger)buttonIndex
+{
+	if (alertView.tag == kAlertTagExportCompleted) {
+		if (buttonIndex != alertView.cancelButtonIndex) {
+			self.documentInteractionController = [UIDocumentInteractionController interactionControllerWithURL:[NSURL fileURLWithPath:self.exportedReportsZipPath]];
+			self.documentInteractionController.delegate = self;
+			BOOL couldPresentAppSelection = [self.documentInteractionController presentOpenInMenuFromRect:self.navigationController.view.bounds inView:self.navigationController.view animated:YES];
+			if (!couldPresentAppSelection) {
+				[[[[UIAlertView alloc] initWithTitle:NSLocalizedString(@"Error", nil) message:NSLocalizedString(@"You don't seem to have any app installed that can open Zip files.", nil) delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil] autorelease] show];
+			}
+		}
+	}
+}
+
+- (void)documentInteractionControllerDidDismissOpenInMenu:(UIDocumentInteractionController *)controller
+{
+	self.documentInteractionController = nil;
+}
+
 - (void)fieldEditorDidCancel:(FieldEditorViewController *)editor
 {
-	[editor dismissModalViewControllerAnimated:YES];
+    [editor dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)didSettingsChanged:(KKPasscodeSettingsViewController*)viewController
@@ -735,6 +762,8 @@
 	[accounts release];
 	[selectedAccount release];
 	[managedObjectContext release];
+	[exportedReportsZipPath release];
+	[documentInteractionController release];
     [super dealloc];
 }
 

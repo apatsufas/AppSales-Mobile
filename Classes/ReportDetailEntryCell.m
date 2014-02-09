@@ -26,13 +26,10 @@
 		[self.contentView addSubview:iconView];
 		
 		revenueLabel = [[UILabel alloc] initWithFrame:CGRectMake(40, 4, 82, 30)];
-		revenueLabel.font = [UIFont boldSystemFontOfSize:17.0];
+		revenueLabel.font = [UIFont systemFontOfSize:17.0];
 		revenueLabel.backgroundColor = [UIColor clearColor];
-		revenueLabel.shadowColor = [UIColor whiteColor];
-		revenueLabel.shadowOffset = CGSizeMake(0, 1);
-		revenueLabel.highlightedTextColor = [UIColor whiteColor];
 		revenueLabel.adjustsFontSizeToFitWidth = YES;
-		revenueLabel.textAlignment = UITextAlignmentRight;
+		revenueLabel.textAlignment = NSTextAlignmentRight;
 		[self.contentView addSubview:revenueLabel];
 		
 		barBackgroundView = [[UIView alloc] initWithFrame:CGRectMake(130, 5, 180, 17)];
@@ -40,24 +37,24 @@
 		barBackgroundView.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 		[self.contentView addSubview:barBackgroundView];
 		
-		barView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 50, 17)];
-		barView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleRightMargin;
+		barView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 0, 17)];
 		barView.backgroundColor = [UIColor colorWithRed:0.541 green:0.612 blue:0.671 alpha:1.0];
 		[barBackgroundView addSubview:barView];
 		
 		percentageLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, barBackgroundView.bounds.size.width - 2, 17)];
 		percentageLabel.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
-		percentageLabel.textAlignment = UITextAlignmentRight;
+		percentageLabel.textAlignment = NSTextAlignmentRight;
 		percentageLabel.backgroundColor = [UIColor clearColor];
-		percentageLabel.font = [UIFont boldSystemFontOfSize:11.0];
+		percentageLabel.font = [UIFont systemFontOfSize:11.0];
 		percentageLabel.textColor = [UIColor whiteColor];
 		[barBackgroundView addSubview:percentageLabel];
 		
 		subtitleLabel = [[UILabel alloc] initWithFrame:CGRectMake(130, 24, 147, 12)];
+        subtitleLabel.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 		subtitleLabel.backgroundColor = [UIColor clearColor];
 		subtitleLabel.font = [UIFont systemFontOfSize:11.0];
 		subtitleLabel.textColor = [UIColor darkGrayColor];
-		subtitleLabel.highlightedTextColor = [UIColor whiteColor];
+		subtitleLabel.highlightedTextColor = [UIColor darkGrayColor];
 		[self.contentView addSubview:subtitleLabel];
 		
 		revenueFormatter = [[NSNumberFormatter alloc] init];
@@ -68,9 +65,6 @@
 		percentageFormatter = [[NSNumberFormatter alloc] init];
 		[percentageFormatter setMaximumFractionDigits:1];
 		[percentageFormatter setNumberStyle:NSNumberFormatterPercentStyle];
-		
-		self.backgroundView = [[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"CellBackground.png"]] autorelease];
-		self.selectedBackgroundView = [[[UIImageView alloc] initWithImage:[UIImage imageNamed:@"CellBackgroundSelected.png"]] autorelease];
 	}
 	return self;
 }
@@ -95,7 +89,7 @@
 	
 	if (!hideBar) {
 		percentageLabel.text = [percentageFormatter stringFromNumber:[NSNumber numberWithFloat:percentage]];
-		barView.frame = CGRectMake(0, 0, barBackgroundView.bounds.size.width * percentage, 17);
+		barView.frame = CGRectMake(0, 0, barBackgroundView.bounds.size.width * MAX(percentage, 0.0), 17);
 	}
 	
 	if (product) {
@@ -118,8 +112,8 @@
 	[super setSelected:selected animated:animated];
 	barBackgroundView.backgroundColor = [UIColor colorWithWhite:0.8 alpha:1.0];
 	barView.backgroundColor = [UIColor colorWithRed:0.541 green:0.612 blue:0.671 alpha:1.0];
-	revenueLabel.shadowColor = [UIColor blackColor];
-	revenueLabel.shadowColor = (self.highlighted || self.selected) ? [UIColor blackColor] : [UIColor whiteColor];
+	//revenueLabel.shadowColor = [UIColor blackColor];
+	//revenueLabel.shadowColor = (self.highlighted || self.selected) ? [UIColor blackColor] : [UIColor whiteColor];
 }
 
 - (void)setHighlighted:(BOOL)highlighted animated:(BOOL)animated
@@ -127,7 +121,7 @@
 	[super setHighlighted:highlighted animated:animated];
 	barBackgroundView.backgroundColor = [UIColor colorWithWhite:0.8 alpha:1.0];
 	barView.backgroundColor = [UIColor colorWithRed:0.541 green:0.612 blue:0.671 alpha:1.0];
-	revenueLabel.shadowColor = (self.highlighted || self.selected) ? [UIColor blackColor] : [UIColor whiteColor];
+	//revenueLabel.shadowColor = (self.highlighted || self.selected) ? [UIColor blackColor] : [UIColor whiteColor];
 }
 
 - (void)dealloc

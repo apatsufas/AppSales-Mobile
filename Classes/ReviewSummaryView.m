@@ -25,10 +25,8 @@
 			
 			UILabel *starLabel = [[[UILabel alloc] initWithFrame:CGRectIntegral(CGRectMake(CGRectGetMinX(barFrame) - 90 - 10, CGRectGetMidY(barFrame) - 15, 90, 29))] autorelease];
 			starLabel.backgroundColor = [UIColor clearColor];
-			starLabel.textAlignment = UITextAlignmentRight;
+			starLabel.textAlignment = NSTextAlignmentRight;
 			starLabel.textColor = [UIColor darkGrayColor];
-			starLabel.shadowColor = [UIColor whiteColor];
-			starLabel.shadowOffset = CGSizeMake(0, 1);
 			starLabel.font = [UIFont systemFontOfSize:15.0];
 			starLabel.text = [@"" stringByPaddingToLength:rating withString:@"\u2605" startingAtIndex:0];
 			[self addSubview:starLabel];
@@ -57,8 +55,6 @@
 			barLabel.textColor = [UIColor darkGrayColor];
 			barLabel.font = [UIFont systemFontOfSize:13.0];
 			barLabel.adjustsFontSizeToFitWidth = YES;
-			barLabel.shadowColor = [UIColor whiteColor];
-			barLabel.shadowOffset = CGSizeMake(0, 1);
 			
 			[self addSubview:barLabel];
 			[barLabels addObject:barLabel];
@@ -81,9 +77,7 @@
 		[allReviewsButton setBackgroundImage:[[UIImage imageNamed:@"AllReviewsButtonHighlighted.png"] stretchableImageWithLeftCapWidth:18 topCapHeight:0] forState:UIControlStateHighlighted];
 		[allReviewsButton setTitle:NSLocalizedString(@"Show All Reviews", nil) forState:UIControlStateNormal];
 		[allReviewsButton setTitleEdgeInsets:UIEdgeInsetsMake(0, -10, 0, 0)];
-		allReviewsButton.titleLabel.font = [UIFont boldSystemFontOfSize:13.0];
-		[allReviewsButton setTitleShadowColor:[UIColor whiteColor] forState:UIControlStateNormal];
-		allReviewsButton.titleLabel.shadowOffset = CGSizeMake(0, 1);
+		allReviewsButton.titleLabel.font = [UIFont systemFontOfSize:13.0];
 		[allReviewsButton setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
 		allReviewsButton.tag = 0;
 		[self addSubview:allReviewsButton];
@@ -94,10 +88,10 @@
 		} else {
 			averageLabel = [[[UILabel alloc] initWithFrame:CGRectMake(10, allReviewsButton.frame.origin.y, 90, 29)] autorelease];
 		}
-		averageLabel.font = [UIFont boldSystemFontOfSize:15.0];
+		averageLabel.font = [UIFont systemFontOfSize:15.0];
 		averageLabel.backgroundColor = [UIColor clearColor];
 		averageLabel.textColor = [UIColor darkGrayColor];
-		averageLabel.textAlignment = UITextAlignmentRight;
+		averageLabel.textAlignment = NSTextAlignmentRight;
 		[self addSubview:averageLabel];
 		
 		if (iPad) {
@@ -146,7 +140,7 @@
 		UILabel *barLabel = [barLabels objectAtIndex:5-rating];
 		barLabel.text = [NSString stringWithFormat:@"%i", numberOfReviews];
 		if ([[unreadRatings objectForKey:[NSNumber numberWithInteger:rating]] integerValue] > 0) {
-			barLabel.font = [UIFont boldSystemFontOfSize:13.0];
+			barLabel.font = [UIFont systemFontOfSize:13.0];
 			barLabel.textColor = [UIColor colorWithRed:0.141 green:0.439 blue:0.847 alpha:1.0];
 		} else {
 			barLabel.font = [UIFont systemFontOfSize:13.0];

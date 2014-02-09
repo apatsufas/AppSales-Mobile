@@ -26,7 +26,7 @@
 		cachedValues = [NSMutableDictionary new];
 		
 		UIView *scaleBackgroundView = [[[UIView alloc] initWithFrame:CGRectMake(0, 0, 46, self.bounds.size.height - 30)] autorelease];
-		scaleBackgroundView.backgroundColor = [UIColor colorWithWhite:0.9 alpha:1.0];
+		scaleBackgroundView.backgroundColor = [UIColor colorWithWhite:0.95 alpha:1.0];
 		[self addSubview:scaleBackgroundView];
 		
 		UIView *bottomLineView = [[[UIView alloc] initWithFrame:CGRectMake(46, self.bounds.size.height - 30, self.bounds.size.width - 46, 1)] autorelease];
@@ -58,19 +58,17 @@
 		[self addSubview:scrollView];
 		
 		titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 4, self.bounds.size.width, 12)];
-		titleLabel.font = [UIFont boldSystemFontOfSize:11.0];
-		titleLabel.textAlignment = UITextAlignmentCenter;
+		titleLabel.font = [UIFont systemFontOfSize:11.0];
+		titleLabel.textAlignment = NSTextAlignmentCenter;
 		titleLabel.textColor = [UIColor grayColor];
 		titleLabel.backgroundColor = [UIColor clearColor];
-		titleLabel.shadowColor = [UIColor whiteColor];
-		titleLabel.shadowOffset = CGSizeMake(0, 1);
 		[self addSubview:titleLabel];
 		
 		self.sectionLabelButton = [UIButton buttonWithType:UIButtonTypeCustom];
 		sectionLabelButton.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
 		[self.sectionLabelButton setBackgroundImage:[UIImage imageNamed:@"DateButton.png"] forState:UIControlStateNormal];
 		self.sectionLabelButton.frame = CGRectMake(0, self.bounds.size.height - 30 - 16, 46, 32);
-		self.sectionLabelButton.titleLabel.font = [UIFont boldSystemFontOfSize:10.0];
+		self.sectionLabelButton.titleLabel.font = [UIFont systemFontOfSize:10.0];
 		self.sectionLabelButton.titleLabel.adjustsFontSizeToFitWidth = YES;
 		[self.sectionLabelButton setTitleColor:[UIColor darkGrayColor] forState:UIControlStateNormal];
 		[self addSubview:self.sectionLabelButton];
@@ -173,7 +171,9 @@
 	for (NSNumber *barIndex in visibleBarViews) {
 		StackedBarView *view = [visibleBarViews objectForKey:barIndex];
 		if (view == barView) {
-			[self.delegate graphView:self didSelectBarAtIndex:[barIndex unsignedIntegerValue] withFrame:[self convertRect:view.frame fromView:view.superview]];
+			CGFloat stackHeight = [view stackHeight];
+			CGRect stackRect = CGRectMake(barView.frame.origin.x, barView.frame.origin.y + (barView.frame.size.height - stackHeight), barView.frame.size.width, stackHeight);
+			[self.delegate graphView:self didSelectBarAtIndex:[barIndex unsignedIntegerValue] withFrame:[self convertRect:stackRect fromView:view.superview]];
 			break;
 		}
 	}
@@ -346,10 +346,8 @@
 			dateLabel.autoresizingMask = UIViewAutoresizingFlexibleTopMargin;
 			dateLabel.backgroundColor = [UIColor clearColor];
 			dateLabel.textColor = [UIColor darkGrayColor];
-			dateLabel.shadowColor = [UIColor whiteColor];
-			dateLabel.shadowOffset = CGSizeMake(0, 1);
-			dateLabel.textAlignment = UITextAlignmentCenter;
-			dateLabel.font = [UIFont boldSystemFontOfSize:14.0];
+			dateLabel.textAlignment = NSTextAlignmentCenter;
+			dateLabel.font = [UIFont systemFontOfSize:14.0];
 			dateLabel.adjustsFontSizeToFitWidth = YES;
 			[barView addSubview:dateLabel];
 			
@@ -453,12 +451,10 @@
 		}
 		label = [[UILabel alloc] initWithFrame:CGRectZero];
 		label.backgroundColor = [UIColor clearColor];
-		label.font = [UIFont boldSystemFontOfSize:12.0];
+		label.font = [UIFont systemFontOfSize:12.0];
 		label.adjustsFontSizeToFitWidth = YES;
-		label.textAlignment = UITextAlignmentCenter;
+		label.textAlignment = NSTextAlignmentCenter;
 		label.textColor = [UIColor darkGrayColor];
-		label.shadowColor = [UIColor whiteColor];
-		label.shadowOffset = CGSizeMake(0, 1);
 		[self addSubview:label];
 	}
 	return self;
@@ -492,6 +488,15 @@
 		label.text = labelText;
 		label.frame = CGRectIntegral(CGRectMake(0, y - 15, self.bounds.size.width, 15));
 	}
+}
+
+- (CGFloat)stackHeight
+{
+	CGFloat stackHeight = 0.0;
+	for (UIView *segmentView in segmentViews) {
+		stackHeight += segmentView.frame.size.height;
+	}
+	return stackHeight;
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
@@ -599,7 +604,7 @@
 				break;
 			}
 		}
-		NSMutableArray *steps = [NSMutableSet set];
+		NSMutableSet *steps = [NSMutableSet set];
 		int step = pickedUnit;
 		while (step <= newMax && pickedUnit != 0) {
 			[steps addObject:[NSNumber numberWithInt:step]];
@@ -673,11 +678,9 @@
 		self.backgroundColor = [UIColor colorWithWhite:0.75 alpha:1.0];
 		label = [[UILabel alloc] initWithFrame:CGRectMake(-40, -8, 40, 16)];
 		label.backgroundColor = [UIColor clearColor];
-		label.font = [UIFont boldSystemFontOfSize:12.0];
+		label.font = [UIFont systemFontOfSize:12.0];
 		label.textColor = [UIColor darkGrayColor];
-		label.shadowColor = [UIColor whiteColor];
-		label.shadowOffset = CGSizeMake(0, 1);
-		label.textAlignment = UITextAlignmentRight;
+		label.textAlignment = NSTextAlignmentRight;
 		label.adjustsFontSizeToFitWidth = YES;
 		[self addSubview:label];
 	}

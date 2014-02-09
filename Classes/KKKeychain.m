@@ -1,5 +1,5 @@
 //
-// Copyright 2011-2012 Kosher Penguin LLC 
+// Copyright 2011-2012 Kosher Penguin LLC
 // Created by Adar Porat (https://github.com/aporat) on 1/16/2012.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,24 +20,24 @@
 
 @implementation KKKeychain
 
-+ (NSString*)appName 
-{	
++ (NSString*)appName
+{
 	NSBundle *bundle = [NSBundle bundleForClass:[self class]];
 	NSString *appName = [bundle objectForInfoDictionaryKey:@"CFBundleDisplayName"];
 	if (!appName) {
-		appName = [bundle objectForInfoDictionaryKey:@"CFBundleName"];	
+		appName = [bundle objectForInfoDictionaryKey:@"CFBundleName"];
 	}
 	return appName;
 }
 
-+ (BOOL)setString:(NSString*)string forKey:(NSString*)key 
++ (BOOL)setString:(NSString*)string forKey:(NSString*)key
 {
 	if (string == nil || key == nil) {
 		return NO;
 	}
 	
 	key = [NSString stringWithFormat:@"%@ - %@", [KKKeychain appName], key];
-  
+    
 	// First check if it already exists, by creating a search dictionary and requesting that
 	// nothing be returned, and performing the search anyway.
 	NSMutableDictionary *existsQueryDictionary = [NSMutableDictionary dictionary];
@@ -49,30 +49,30 @@
 	// Add the keys to the search dict
 	[existsQueryDictionary setObject:@"service" forKey:(id)kSecAttrService];
 	[existsQueryDictionary setObject:key forKey:(id)kSecAttrAccount];
-  
+    
 	OSStatus res = SecItemCopyMatching((CFDictionaryRef)existsQueryDictionary, NULL);
 	if (res == errSecItemNotFound) {
 		if (string != nil) {
 			NSMutableDictionary *addDict = existsQueryDictionary;
 			[addDict setObject:data forKey:(id)kSecValueData];
-      
+            
 			res = SecItemAdd((CFDictionaryRef)addDict, NULL);
-			NSAssert1(res == errSecSuccess, @"Recieved %d from SecItemAdd!", res);
+			NSAssert1(res == errSecSuccess, @"Recieved %ld from SecItemAdd!", res);
 		}
 	} else if (res == errSecSuccess) {
 		// Modify an existing one
 		// Actually pull it now of the keychain at this point.
 		NSDictionary *attributeDict = [NSDictionary dictionaryWithObject:data forKey:(id)kSecValueData];
 		res = SecItemUpdate((CFDictionaryRef)existsQueryDictionary, (CFDictionaryRef)attributeDict);
-		NSAssert1(res == errSecSuccess, @"SecItemUpdated returned %d!", res);
+		NSAssert1(res == errSecSuccess, @"SecItemUpdated returned %ld!", res);
 	} else {
-		NSAssert1(NO, @"Received %d from SecItemCopyMatching!", res);
+		NSAssert1(NO, @"Received %ld from SecItemCopyMatching!", res);
 	}
 	return YES;
 }
 
-+ (NSString*)getStringForKey:(NSString*)key 
-{  
++ (NSString*)getStringForKey:(NSString*)key
+{
 	key = [NSString stringWithFormat:@"%@ - %@", [KKKeychain appName], key];
 	NSMutableDictionary *existsQueryDictionary = [NSMutableDictionary dictionary];
 	[existsQueryDictionary setObject:(id)kSecClassGenericPassword forKey:(id)kSecClass];
@@ -92,8 +92,8 @@
 		NSString *string = [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease];
 		return string;
 	} else {
-		NSAssert1(res == errSecItemNotFound, @"SecItemCopyMatching returned %d!", res);
-	}		
+		NSAssert1(res == errSecItemNotFound, @"SecItemCopyMatching returned %ld!", res);
+	}
 	
 	return nil;
 }

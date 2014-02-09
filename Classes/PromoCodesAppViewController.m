@@ -47,12 +47,10 @@
 		UIBarButtonItem *spinnerItem = [[[UIBarButtonItem alloc] initWithCustomView:spinner] autorelease];
 		
 		UILabel *statusLabel = [[[UILabel alloc] initWithFrame:CGRectMake(0, 10, 200, 20)] autorelease];
-		statusLabel.font = [UIFont boldSystemFontOfSize:14.0];
+		statusLabel.font = [UIFont systemFontOfSize:14.0];
 		statusLabel.backgroundColor = [UIColor clearColor];
 		statusLabel.textColor = [UIColor whiteColor];
-		statusLabel.shadowColor = [UIColor blackColor];
-		statusLabel.shadowOffset = CGSizeMake(0, -1);
-		statusLabel.textAlignment = UITextAlignmentCenter;
+		statusLabel.textAlignment = NSTextAlignmentCenter;
 		statusLabel.text = NSLocalizedString(@"Loading Promo Codes...", nil);
 		
 		UIView *statusView = [[[UIView alloc] initWithFrame:CGRectMake(0, 0, 200, 40)] autorelease];
@@ -107,7 +105,7 @@
 	if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPad) {
 		navController.modalPresentationStyle = UIModalPresentationFormSheet;
 	}
-	[self presentModalViewController:navController animated:YES];
+    [self presentViewController:navController animated:YES completion:nil];
 }
 
 - (void)stopDownload:(id)sender
@@ -161,14 +159,14 @@
 		[[[[UIAlertView alloc] initWithTitle:nil message:NSLocalizedString(@"Please enter a smaller number. You have a maximum of 50 promo codes per version of your app.", nil) delegate:nil cancelButtonTitle:NSLocalizedString(@"OK", nil) otherButtonTitles:nil] autorelease] show];
 		return;
 	}
-	[self dismissModalViewControllerAnimated:YES];
+	[self dismissViewControllerAnimated:YES completion:nil];
 	
 	[[ReportDownloadCoordinator sharedReportDownloadCoordinator] downloadPromoCodesForProduct:product numberOfCodes:numberOfCodes];
 }
 
 - (void)fieldEditorDidCancel:(FieldEditorViewController *)editor
 {
-	[self dismissModalViewControllerAnimated:YES];
+	[self dismissViewControllerAnimated:YES completion:nil];
 }
 
 - (void)refreshHistory:(id)sender
@@ -233,7 +231,6 @@
 	if (indexPath.section == 0) {
 		cell.textLabel.text = NSLocalizedString(@"Request New Codes...", nil);
 		cell.imageView.image = [UIImage imageNamed:@"RequestPromoCode.png"];
-		cell.imageView.highlightedImage = [UIImage as_tintedImageNamed:@"RequestPromoCode.png" color:[UIColor whiteColor]];
 		cell.textLabel.textColor = [UIColor blackColor];
 	} else {
 		PromoCode *promoCode = [self.promoCodes objectAtIndex:indexPath.row];
@@ -242,7 +239,6 @@
 		NSString *dateString = [dateFormatter stringFromDate:promoCode.requestDate];
 		cell.detailTextLabel.text = (used) ? [NSString stringWithFormat:@"(used)  %@", dateString] : dateString;
 		cell.imageView.image = (used) ? [UIImage as_tintedImageNamed:@"PromoCodes.png" color:[UIColor grayColor]] : [UIImage imageNamed:@"PromoCodes.png"];
-		cell.imageView.highlightedImage = [UIImage as_tintedImageNamed:@"PromoCodes.png" color:[UIColor whiteColor]];
 		cell.textLabel.textColor = (used) ? [UIColor grayColor] : [UIColor blackColor];
 	}
 	
@@ -289,7 +285,7 @@
 				NSString *subject = [NSString stringWithFormat:@"Promo Code for %@", [product displayName]];
 				[mailComposeViewController setMessageBody:body isHTML:YES];
 				[mailComposeViewController setSubject:subject];
-				[self presentModalViewController:mailComposeViewController animated:YES];
+                [self presentViewController:mailComposeViewController animated:YES completion:nil];
 			} else if (buttonIndex == 1) {
 				//copy
 				[[UIPasteboard generalPasteboard] setString:self.selectedPromoCode.code];
@@ -315,7 +311,7 @@
 				NSString *subject = [NSString stringWithFormat:@"Promo Codes for %@", [product displayName]];
 				[mailComposeViewController setMessageBody:body isHTML:NO];
 				[mailComposeViewController setSubject:subject];
-				[self presentModalViewController:mailComposeViewController animated:YES];
+                [self presentViewController:mailComposeViewController animated:YES completion:nil];
 			} else if (buttonIndex == 1) {
 				NSMutableString *allCodes = [NSMutableString string];
 				for (PromoCode *promoCode in self.promoCodes) {
@@ -338,7 +334,7 @@
 		self.selectedPromoCode.used = [NSNumber numberWithBool:YES];
 		[self.tableView reloadData];
 	}
-	[self dismissModalViewControllerAnimated:YES];
+	[self dismissViewControllerAnimated:YES completion:nil];
 }
 
 

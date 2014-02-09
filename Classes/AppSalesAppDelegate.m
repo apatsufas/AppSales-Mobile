@@ -31,10 +31,18 @@
 	
 	srandom(time(NULL));
 	self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
-	
+	self.window.tintColor = [UIColor colorWithRed:0.28 green:0.51 blue:0.69 alpha:1.0];
+    
+    NSString *currencyCode = [[NSLocale currentLocale] objectForKey:NSLocaleCurrencyCode];
+	if (![[CurrencyManager sharedManager].availableCurrencies containsObject:currencyCode]) {
+		currencyCode = @"USD";
+	}
+    
 	NSDictionary *defaults = [NSDictionary dictionaryWithObjectsAndKeys:
 							  [NSNumber numberWithBool:YES], kSettingDownloadPayments,
+							  currencyCode, @"CurrencyManagerBaseCurrency",
 							  nil];
+    
 	[[NSUserDefaults standardUserDefaults] registerDefaults:defaults];
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(promoCodeLicenseAgreementLoaded:) name:@"PromoCodeOperationLoadedLicenseAgreementNotification" object:nil];
@@ -45,6 +53,7 @@
 		rootViewController.managedObjectContext = self.managedObjectContext;
 		UINavigationController *navigationController = [[[UINavigationController alloc] initWithRootViewController:rootViewController] autorelease];
 		navigationController.toolbarHidden = NO;
+        navigationController.navigationBar.translucent = NO;
 		self.accountsViewController = rootViewController;
 		
 		self.window.rootViewController = navigationController;
@@ -52,10 +61,11 @@
 	} else {
 		self.accountsViewController = [[[AccountsViewController alloc] initWithStyle:UITableViewStyleGrouped] autorelease];
 		self.accountsViewController.managedObjectContext = self.managedObjectContext;
-		self.accountsViewController.contentSizeForViewInPopover = CGSizeMake(320, 480);
+		self.accountsViewController.preferredContentSize = CGSizeMake(320, 480);
 		self.accountsViewController.delegate = self;
 		UINavigationController *accountsNavController = [[[UINavigationController alloc] initWithRootViewController:self.accountsViewController] autorelease];
 		accountsNavController.toolbarHidden = NO;
+        accountsNavController.navigationBar.translucent = NO;
 		self.accountsPopover = [[[UIPopoverController alloc] initWithContentViewController:accountsNavController] autorelease];	
 		[self loadAccount:nil];
 		[self.window makeKeyAndVisible];
@@ -82,7 +92,17 @@
 	
 	[self showPasscodeLockIfNeeded];
 	if (iPad) {
-		[self selectAccount:nil];
+		//Restore previously-selected account:
+		NSString *accountIDURIString = [[NSUserDefaults standardUserDefaults] stringForKey:kSettingSelectedAccountID];
+		if (accountIDURIString) {
+			NSManagedObjectID *accountID = [self.managedObjectContext.persistentStoreCoordinator managedObjectIDForURIRepresentation:[NSURL URLWithString:accountIDURIString]];
+			ASAccount *account = (ASAccount *)[self.managedObjectContext objectWithID:accountID];
+			if (account) {
+				[self accountsViewController:nil didSelectAccount:account];
+			}
+		} else {
+			[self selectAccount:nil];
+		}
 	}
 	
 	return YES;
@@ -90,7 +110,7 @@
 
 - (void)selectAccount:(id)sender
 {
-	if (!self.window.rootViewController.modalViewController) {
+	if (!self.window.rootViewController.presentedViewController) {
 		[self.accountsPopover presentPopoverFromRect:CGRectMake(50, 50, 1, 1) inView:self.window.rootViewController.view permittedArrowDirections:UIPopoverArrowDirectionUp animated:YES];
 	}
 }
@@ -99,6 +119,9 @@
 {
 	[self.accountsPopover dismissPopoverAnimated:YES];
 	[self loadAccount:account];
+	
+	NSString *accountIDURIString = [[[account objectID] URIRepresentation] absoluteString];
+	[[NSUserDefaults standardUserDefaults] setObject:accountIDURIString forKey:kSettingSelectedAccountID];
 }
 
 - (void)actionSheet:(UIActionSheet *)actionSheet clickedButtonAtIndex:(NSInteger)buttonIndex
@@ -123,21 +146,25 @@
 	SalesViewController *salesVC = [[[SalesViewController alloc] initWithAccount:account] autorelease];
 	salesVC.navigationItem.leftBarButtonItem = selectAccountButtonItem1;
 	UINavigationController *salesNavController = [[[UINavigationController alloc] initWithRootViewController:salesVC] autorelease];
-	
+	salesNavController.navigationBar.translucent = NO;
+    
 	ReviewsViewController *reviewsVC = [[[ReviewsViewController alloc] initWithAccount:account] autorelease];
 	reviewsVC.navigationItem.leftBarButtonItem = selectAccountButtonItem2;
 	UINavigationController *reviewsNavController = [[[UINavigationController alloc] initWithRootViewController:reviewsVC] autorelease];
-	
+	reviewsNavController.navigationBar.translucent = NO;
+    
 	PaymentsViewController *paymentsVC = [[[PaymentsViewController alloc] initWithAccount:account] autorelease];
 	paymentsVC.navigationItem.leftBarButtonItem = selectAccountButtonItem3;
 	UINavigationController *paymentsNavController = [[[UINavigationController alloc] initWithRootViewController:paymentsVC] autorelease];
-	
+	paymentsNavController.navigationBar.translucent = NO;
+    
 	PromoCodesViewController *promoVC = [[[PromoCodesViewController alloc] initWithAccount:account] autorelease];
 	promoVC.navigationItem.leftBarButtonItem = selectAccountButtonItem4;
 	UINavigationController *promoNavController = [[[UINavigationController alloc] initWithRootViewController:promoVC] autorelease];
 	promoNavController.toolbarHidden = NO;
 	promoNavController.toolbar.barStyle = UIBarStyleBlackOpaque;
-	
+	promoNavController.navigationBar.translucent = NO;
+    
 	UITabBarController *tabController = [[[UITabBarController alloc] initWithNibName:nil bundle:nil] autorelease];
 	[tabController setViewControllers:[NSArray arrayWithObjects:salesNavController, reviewsNavController, paymentsNavController, promoNavController, nil]];
 	
@@ -241,14 +268,14 @@
 			nav.navigationBar.barStyle = accountsViewController.navigationController.navigationBar.barStyle;    
 		}
 		UIViewController *viewControllerForPresentingPasscode = nil;
-		if (self.window.rootViewController.modalViewController) {
-			if ([self.window.rootViewController.modalViewController isKindOfClass:[UINavigationController class]] 
-				&& [[[(UINavigationController *)self.window.rootViewController.modalViewController viewControllers] objectAtIndex:0] isKindOfClass:[KKPasscodeViewController class]]) {
+		if (self.window.rootViewController.presentedViewController) {
+			if ([self.window.rootViewController.presentedViewController isKindOfClass:[UINavigationController class]] 
+				&& [[[(UINavigationController *)self.window.rootViewController.presentedViewController viewControllers] objectAtIndex:0] isKindOfClass:[KKPasscodeViewController class]]) {
 				//The passcode dialog is already shown...
 				return;
 			}
 			//We're in the settings or add account dialog...
-			viewControllerForPresentingPasscode = self.window.rootViewController.modalViewController;
+			viewControllerForPresentingPasscode = self.window.rootViewController.presentedViewController;
 		} else {
 			viewControllerForPresentingPasscode = self.window.rootViewController;
 		}
@@ -256,7 +283,7 @@
 			[self.accountsPopover dismissPopoverAnimated:NO];
 		}
 		[[NSNotificationCenter defaultCenter] postNotificationName:ASWillShowPasscodeLockNotification object:self];
-		[viewControllerForPresentingPasscode presentModalViewController:nav animated:NO];
+        [viewControllerForPresentingPasscode presentViewController:nav animated:YES completion:nil];
 	}
 }
 
@@ -270,7 +297,7 @@
 	NSString *licenseAgreement = [[notification userInfo] objectForKey:@"licenseAgreement"];
 	PromoCodesLicenseViewController *vc = [[[PromoCodesLicenseViewController alloc] initWithLicenseAgreement:licenseAgreement operation:[notification object]] autorelease];
 	UINavigationController *navController = [[[UINavigationController alloc] initWithRootViewController:vc] autorelease];
-	[self.window.rootViewController presentModalViewController:navController animated:YES];
+    [self.window.rootViewController presentViewController:navController animated:YES completion:nil];
 }
 
 #pragma mark - Core Data
