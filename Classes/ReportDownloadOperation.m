@@ -249,7 +249,7 @@
 		
 		NSString *ittsBaseURL = @"https://itunesconnect.apple.com";
 		NSString *ittsLoginPageAction = @"/WebObjects/iTunesConnect.woa";
-		NSString *signoutSentinel = @"name=\"signOutForm\"";
+		NSString *signoutSentinel = @"Sign Out";
 		
 		NSURL *loginURL = [NSURL URLWithString:[ittsBaseURL stringByAppendingString:ittsLoginPageAction]];
 		NSHTTPURLResponse *loginPageResponse = nil;
@@ -305,7 +305,7 @@
 		});
 		NSScanner *paymentsScanner = [NSScanner scannerWithString:loginPage];
 		NSString *paymentsAction = nil;
-		[paymentsScanner scanUpToString:@"alt=\"Payments and Financial Reports" intoString:NULL];
+        [paymentsScanner scanUpToString:@"<p>Manage your contracts, tax, and banking information.</p>" intoString:NULL];
 		[paymentsScanner scanUpToString:@"<a href=\"" intoString:NULL];
 		[paymentsScanner scanString:@"<a href=\"" intoString:NULL];
 		[paymentsScanner scanUpToString:@"\"" intoString:&paymentsAction];
@@ -359,13 +359,13 @@
 				for (NSString *additionalVendorOption in vendorOptions) {
 					NSString *paymentsFormURLString = [NSString stringWithFormat:@"https://itunesconnect.apple.com%@", switchVendorAction];
 					
-					NSData *additionalPaymentsPageData = [self dataFromSynchronousPostRequestWithURL:[NSURL URLWithString:paymentsFormURLString] 
+					NSData *additionalPaymentsPageData = [self dataFromSynchronousPostRequestWithURL:[NSURL URLWithString:paymentsFormURLString]
 																					  bodyDictionary:[NSDictionary dictionaryWithObjectsAndKeys:additionalVendorOption, vendorSelectName, nil]
 																							response:NULL];
 					NSString *additionalPaymentsPage = [[[NSString alloc] initWithData:additionalPaymentsPageData encoding:NSUTF8StringEncoding] autorelease];
 					[self parsePaymentsPage:additionalPaymentsPage inAccount:account vendorID:additionalVendorOption];
 				}
-		
+                
 				NSScanner *logoutFormScanner = [NSScanner scannerWithString:paymentsPage];
 				NSString *signoutFormAction = nil;
 				[logoutFormScanner scanUpToString:@"<form name=\"signOutForm\"" intoString:NULL];
